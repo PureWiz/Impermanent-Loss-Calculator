@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Impermanent Loss Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>🍣 Impermanent Loss Calculator</h1>
+  
+  <div class="card">
+    <h2>Token Selection</h2>
+    <div class="row">
+      <div>
+        <label>Token A</label>
+        <select id="tokenA"></select>
+        <p>Price: $<span id="priceA">-</span></p>
+      </div>
+      <div>
+        <label>Token B</label>
+        <select id="tokenB"></select>
+        <p>Price: $<span id="priceB">-</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Inputs</h2>
+    <div class="row">
+      <div>
+        <label>Amount Token A</label>
+        <input type="number" id="amountA" value="5" />
+      </div>
+      <div>
+        <label>Amount Token B</label>
+        <input type="number" id="amountB" value="5" />
+      </div>
+    </div>
+    <label>Future Price of Token A</label>
+    <input type="number" id="futureA" value="120" />
+    <label>Future Price of Token B</label>
+    <input type="number" id="futureB" value="80" />
+    <label>APR (%)</label>
+    <input type="range" id="apr" min="1" max="500" value="10" />
+    <span id="aprLabel">10%</span>
+    <label>Duration (Days)</label>
+    <input type="number" id="days" value="365" min="0" max="365"/>
+    <button onclick="calculate()">Calculate</button>
+  </div>
+
+  <div class="card">
+    <h2>Results</h2>
+    <div id="output"></div>
+    <canvas id="chart" width="400" height="200"></canvas>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
