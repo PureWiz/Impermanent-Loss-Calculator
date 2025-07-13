@@ -7,7 +7,6 @@ const aprLabel = document.getElementById("aprLabel");
 
 let topCoins = [];
 
-// Load top 100 coins from CoinGecko
 fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
   .then(data => {
@@ -50,32 +49,37 @@ function calculate() {
   const futureA = parseFloat(document.getElementById("futureA").value);
   const futureB = parseFloat(document.getElementById("futureB").value);
   const apr = parseFloat(aprSlider.value);
-  const days = parseFloat(document.getElementById("days").value);
+  const daysSelected = parseFloat(document.getElementById("days").value);
 
   const initialValue = priceA * amountA + priceB * amountB;
   const hodlValue = futureA * amountA + futureB * amountB;
   const poolValue = 2 * Math.sqrt(futureA * amountA * futureB * amountB);
+
   const dailyRate = apr / 365 / 100;
-  const feeGain = initialValue * dailyRate * days;
+  const feeGain = initialValue * dailyRate * daysSelected;
   const poolTotal = poolValue + feeGain;
-  const impermanentLoss = ((poolTotal - hodlValue) / hodlValue) * 100;
+  const netReturn = poolTotal - hodlValue;
+  const impermanentLoss = hodlValue - poolValue;
 
   let breakEvenDay = "No break-even point within selected timeframe";
+
   for (let d = 1; d <= 365; d++) {
     const gain = initialValue * dailyRate * d;
-    const total = poolValue + gain;
-    if (total >= hodlValue) {
+    if ((poolValue + gain) >= hodlValue) {
       breakEvenDay = `${d} day${d > 1 ? "s" : ""}`;
       break;
     }
   }
 
+  const verdict = poolTotal > hodlValue ? "🟢 Pool strategy is better" : "🛑 HODL strategy is safer";
+
   document.getElementById("output").innerHTML = `
     <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
     <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
-    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} (${apr}%)</p>
-    <p><strong>Impermanent Loss (vs HODL):</strong> ${impermanentLoss.toFixed(2)}%</p>
+    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} over ${daysSelected} days (${apr}% APR)</p>
+    <p><strong>Impermanent Loss Amount:</strong> -$${impermanentLoss.toFixed(2)}</p>
     <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
+    <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
   `;
 
   drawChart(initialValue, poolValue, hodlValue, dailyRate);
@@ -85,6 +89,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
   const ctx = document.getElementById('chart').getContext('2d');
   const labels = [];
   const netReturns = [];
+  let breakevenIndex = -1;
 
   for (let day = 0; day <= 365; day += 15) {
     labels.push(`${day}`);
@@ -92,6 +97,9 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
     const totalPool = poolValue + gain;
     const diff = ((totalPool - hodlValue) / hodlValue) * 100;
     netReturns.push(diff.toFixed(2));
+    if (breakevenIndex === -1 && totalPool >= hodlValue) {
+      breakevenIndex = labels.length - 1;
+    }
   }
 
   if (window.myChart) {
@@ -109,8 +117,10 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
         backgroundColor: 'rgba(0,255,150,0.2)',
         borderColor: '#00ffc8',
         tension: 0.4,
-        pointBackgroundColor: '#ffffff',
-        pointRadius: 4
+        pointBackgroundColor: '#fff',
+        pointRadius: function(ctx) {
+          return ctx.dataIndex === breakevenIndex ? 6 : 4;
+        }
       }]
     },
     options: {
@@ -138,7 +148,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
         y: {
           title: {
             display: true,
-            text: 'Net Return vs HODL (%)',
+            text: 'Net Return (%)',
             color: '#ccc'
           },
           ticks: { color: '#ccc' },
