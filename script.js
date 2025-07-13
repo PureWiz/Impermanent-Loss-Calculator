@@ -55,35 +55,44 @@ function calculate() {
   const initialValue = priceA * amountA + priceB * amountB;
   const hodlValue = futureA * amountA + futureB * amountB;
   const poolValue = 2 * Math.sqrt(futureA * amountA * futureB * amountB);
-  const feeGain = initialValue * (apr / 100) * (days / 365);
+  const dailyRate = apr / 365 / 100;
+  const feeGain = initialValue * dailyRate * days;
   const poolTotal = poolValue + feeGain;
   const impermanentLoss = ((poolTotal - hodlValue) / hodlValue) * 100;
+
+  let breakEvenDay = "No break-even point within selected timeframe";
+  for (let d = 1; d <= 365; d++) {
+    const gain = initialValue * dailyRate * d;
+    const total = poolValue + gain;
+    if (total >= hodlValue) {
+      breakEvenDay = `${d} day${d > 1 ? "s" : ""}`;
+      break;
+    }
+  }
 
   document.getElementById("output").innerHTML = `
     <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
     <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
     <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} (${apr}%)</p>
     <p><strong>Impermanent Loss (vs HODL):</strong> ${impermanentLoss.toFixed(2)}%</p>
+    <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
   `;
 
-  drawChart(futureA, futureB, amountA, amountB);
+  drawChart(initialValue, poolValue, hodlValue, dailyRate);
 }
 
-function drawChart(futureA, futureB, amountA, amountB) {
+function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
   const ctx = document.getElementById('chart').getContext('2d');
-  const labels = ['-50%', '-25%', '0%', '+25%', '+50%'];
-  const ilData = [];
+  const labels = [];
+  const netReturns = [];
 
-  const priceRatios = [-0.5, -0.25, 0, 0.25, 0.5];
-
-  priceRatios.forEach(change => {
-    const adjA = futureA * (1 + change);
-    const adjB = futureB * (1 - change);
-    const pool = 2 * Math.sqrt(adjA * amountA * adjB * amountB);
-    const hodl = adjA * amountA + adjB * amountB;
-    const il = ((pool - hodl) / hodl) * 100;
-    ilData.push(il.toFixed(2));
-  });
+  for (let day = 0; day <= 365; day += 15) {
+    labels.push(`${day}`);
+    const gain = initialValue * dailyRate * day;
+    const totalPool = poolValue + gain;
+    const diff = ((totalPool - hodlValue) / hodlValue) * 100;
+    netReturns.push(diff.toFixed(2));
+  }
 
   if (window.myChart) {
     window.myChart.destroy();
@@ -94,10 +103,10 @@ function drawChart(futureA, futureB, amountA, amountB) {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Impermanent Loss (%)',
-        data: ilData,
+        label: 'Net Return vs HODL (%)',
+        data: netReturns,
         fill: true,
-        backgroundColor: 'rgba(0,255,200,0.2)',
+        backgroundColor: 'rgba(0,255,150,0.2)',
         borderColor: '#00ffc8',
         tension: 0.4,
         pointBackgroundColor: '#ffffff',
@@ -108,29 +117,32 @@ function drawChart(futureA, futureB, amountA, amountB) {
       responsive: true,
       plugins: {
         legend: {
-          labels: {
-            color: '#fff'
-          }
+          labels: { color: '#fff' }
         },
         tooltip: {
           callbacks: {
-            label: context => `IL: ${context.parsed.y}%`
+            label: context => `Net Difference: ${context.parsed.y}%`
           }
         }
       },
       scales: {
         x: {
+          title: {
+            display: true,
+            text: 'Days',
+            color: '#ccc'
+          },
           ticks: { color: '#ccc' },
           grid: { color: '#333' }
         },
         y: {
-          ticks: { color: '#ccc' },
-          grid: { color: '#333' },
           title: {
             display: true,
-            text: 'Loss vs HODL (%)',
+            text: 'Net Return vs HODL (%)',
             color: '#ccc'
-          }
+          },
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
         }
       },
       animation: {
