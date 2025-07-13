@@ -5,32 +5,40 @@ const priceBField = document.getElementById("priceB");
 const aprSlider = document.getElementById("apr");
 const aprLabel = document.getElementById("aprLabel");
 
+let topCoins = [];
+
 // Load top 100 coins from CoinGecko
-fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&per_page=100&page=1")
+fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
   .then(data => {
-    data.forEach(coin => {
-      const optionA = document.createElement("option");
-      optionA.value = coin.id;
-      optionA.textContent = coin.symbol.toUpperCase();
-      tokenASelect.appendChild(optionA);
-
-      const optionB = document.createElement("option");
-      optionB.value = coin.id;
-      optionB.textContent = coin.symbol.toUpperCase();
-      tokenBSelect.appendChild(optionB);
-    });
+    topCoins = data;
+    populateDropdown(tokenASelect, topCoins);
+    populateDropdown(tokenBSelect, topCoins);
   });
+
+function populateDropdown(select, coins) {
+  coins.forEach(coin => {
+    const option = document.createElement("option");
+    option.value = coin.id;
+    option.textContent = `${coin.symbol.toUpperCase()} (${coin.name})`;
+    select.appendChild(option);
+  });
+}
 
 tokenASelect.onchange = () => updatePrice(tokenASelect.value, priceAField);
 tokenBSelect.onchange = () => updatePrice(tokenBSelect.value, priceBField);
-aprSlider.oninput = () => aprLabel.textContent = aprSlider.value + "%";
+aprSlider.oninput = () => aprLabel.textContent = `${aprSlider.value}%`;
 
 function updatePrice(id, field) {
   fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`)
     .then(res => res.json())
     .then(data => {
-      field.textContent = data[id].usd.toFixed(2);
+      const newPrice = data[id]?.usd?.toFixed(2);
+      if (newPrice) {
+        field.textContent = newPrice;
+        field.parentElement.style.opacity = 0.3;
+        setTimeout(() => field.parentElement.style.opacity = 1, 250);
+      }
     });
 }
 
@@ -41,7 +49,7 @@ function calculate() {
   const amountB = parseFloat(document.getElementById("amountB").value);
   const futureA = parseFloat(document.getElementById("futureA").value);
   const futureB = parseFloat(document.getElementById("futureB").value);
-  const apr = parseFloat(document.getElementById("apr").value);
+  const apr = parseFloat(aprSlider.value);
   const days = parseFloat(document.getElementById("days").value);
 
   const initialValue = priceA * amountA + priceB * amountB;
@@ -61,34 +69,73 @@ function calculate() {
   drawChart(futureA, futureB, amountA, amountB);
 }
 
-function drawChart(fA, fB, amtA, amtB) {
+function drawChart(futureA, futureB, amountA, amountB) {
   const ctx = document.getElementById('chart').getContext('2d');
-  const labels = [];
+  const labels = ['-50%', '-25%', '0%', '+25%', '+50%'];
   const ilData = [];
 
-  for (let i = -50; i <= 50; i += 5) {
-    const ratio = (fA * (1 + i/100)) / (fB * (1 - i/100));
-    const il = 2 * Math.sqrt(ratio) / (1 + ratio) - 1;
-    labels.push(`${i}%`);
-    ilData.push((il * 100).toFixed(2));
+  const priceRatios = [-0.5, -0.25, 0, 0.25, 0.5];
+
+  priceRatios.forEach(change => {
+    const adjA = futureA * (1 + change);
+    const adjB = futureB * (1 - change);
+    const pool = 2 * Math.sqrt(adjA * amountA * adjB * amountB);
+    const hodl = adjA * amountA + adjB * amountB;
+    const il = ((pool - hodl) / hodl) * 100;
+    ilData.push(il.toFixed(2));
+  });
+
+  if (window.myChart) {
+    window.myChart.destroy();
   }
 
-  new Chart(ctx, {
+  window.myChart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
       datasets: [{
         label: 'Impermanent Loss (%)',
         data: ilData,
-        borderColor: '#00ffc8',
-        backgroundColor: 'rgba(0,255,200,0.2)',
         fill: true,
+        backgroundColor: 'rgba(0,255,200,0.2)',
+        borderColor: '#00ffc8',
+        tension: 0.4,
+        pointBackgroundColor: '#ffffff',
+        pointRadius: 4
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { display: false }
+        legend: {
+          labels: {
+            color: '#fff'
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: context => `IL: ${context.parsed.y}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
+        },
+        y: {
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' },
+          title: {
+            display: true,
+            text: 'Loss vs HODL (%)',
+            color: '#ccc'
+          }
+        }
+      },
+      animation: {
+        duration: 1200,
+        easing: 'easeOutQuart'
       }
     }
   });
