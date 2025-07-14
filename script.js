@@ -68,29 +68,36 @@ function calculate() {
   const hodlValue = futureA * amountA + futureB * amountB;
   const dailyRate = apr / 365 / 100;
 
-  let inRange = true;
   let rangeNote = "";
   let adjustedAmountA = amountA;
   let adjustedAmountB = amountB;
   let feeGain = 0;
 
   if (useCustomRange) {
-    if (futureA < rangeMin) {
-      inRange = false;
-      rangeNote = "Price below range — pool converted to ETH";
-      adjustedAmountB = 0;
-    } else if (futureA > rangeMax) {
-      inRange = false;
-      rangeNote = "Price above range — pool converted to USDC";
-      adjustedAmountA = 0;
-    } else {
-      feeGain = initialValue * dailyRate * daysSelected;
-      rangeNote = "Price stays within range — fees active";
+    let inRangeDays = 0;
+    for (let day = 1; day <= daysSelected; day++) {
+      const simulatedPrice = priceA + (day / daysSelected) * (futureA - priceA);
+      if (simulatedPrice >= rangeMin && simulatedPrice <= rangeMax) {
+        inRangeDays++;
+      }
     }
+
+    feeGain = initialValue * dailyRate * inRangeDays;
+
+    if (futureA < rangeMin) {
+      adjustedAmountB = 0;
+      rangeNote = `Price ended below range → LP converted to ETH. Fees collected for ${inRangeDays} day${inRangeDays !== 1 ? "s" : ""}`;
+    } else if (futureA > rangeMax) {
+      adjustedAmountA = 0;
+      rangeNote = `Price ended above range → LP converted to USDC. Fees collected for ${inRangeDays} day${inRangeDays !== 1 ? "s" : ""}`;
+    } else {
+      rangeNote = `Price ended in range → LP stayed active. Fees collected for ${inRangeDays} day${inRangeDays !== 1 ? "s" : ""}`;
+    }
+
     drawRangeChart(rangeMin, rangeMax, priceA, futureA);
   } else {
     feeGain = initialValue * dailyRate * daysSelected;
-    rangeNote = "Full range pool — fees active";
+    rangeNote = `Full range pool → LP active for all ${daysSelected} days.`;
     document.getElementById("rangeChart").style.display = "none";
   }
 
@@ -101,7 +108,7 @@ function calculate() {
   let breakEvenDay = "No break-even within 1 year";
   for (let d = 1; d <= 365; d++) {
     const gain = initialValue * dailyRate * d;
-    const total = poolValue + (inRange ? gain : 0);
+    const total = poolValue + (useCustomRange ? initialValue * dailyRate * Math.min(d, inRangeDays) : gain);
     if (total >= hodlValue) {
       breakEvenDay = `${d} day${d > 1 ? "s" : ""}`;
       break;
@@ -113,17 +120,17 @@ function calculate() {
   document.getElementById("output").innerHTML = `
     <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
     <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
-    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} (${inRange ? "active" : "inactive"})</p>
+    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
     <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
     <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
     <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
     <p><em>${rangeNote}</em></p>
   `;
 
-  drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange);
+  drawChart(initialValue, poolValue, hodlValue, dailyRate, useCustomRange ? inRangeDays : daysSelected);
 }
 
-function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
+function drawChart(initialValue, poolValue, hodlValue, dailyRate, effectiveDays) {
   const ctx = document.getElementById('chart').getContext('2d');
   const labels = [];
   const netReturns = [];
@@ -132,8 +139,8 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
 
   for (let day = 0; day <= 365; day += 15) {
     labels.push(`${day}`);
-    const gain = initialValue * dailyRate * day;
-    const totalPool = poolValue + (inRange ? gain : 0);
+    const gain = initialValue * dailyRate * Math.min(day, effectiveDays);
+    const totalPool = poolValue + gain;
     const diff = ((totalPool - hodlValue) / hodlValue) * 100;
     netReturns.push(diff.toFixed(2));
 
@@ -178,7 +185,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
           annotations: {
             line1: {
               type: 'line',
-              scaleID: 'x',
+                            scaleID: 'x',
               value: breakevenDayLabel.toString(),
               borderColor: '#00ffc8',
               borderWidth: 2,
@@ -198,7 +205,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
           title: { display: true, text: 'Days', color: '#ccc' },
           ticks: { color: '#ccc' },
           grid: { color: '#333' }
-                },
+        },
         y: {
           title: {
             display: true,
@@ -212,41 +219,6 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
       animation: {
         duration: 1200,
         easing: 'easeOutQuart'
-      }
-    }
-  });
-}
-
-function drawRangeChart(min, max, current, future) {
-  const ctx = document.getElementById("rangeChart").getContext("2d");
-
-  if (window.rangeVisChart) window.rangeVisChart.destroy();
-
-  window.rangeVisChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Min', 'Current', 'Max', 'Future'],
-      datasets: [{
-        label: 'Price Position',
-        data: [min, current, max, future],
-        backgroundColor: ['#888', '#00ffc8', '#888', '#ffaa00']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#ccc' },
-          grid: { display: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: { color: '#ccc' },
-          grid: { color: '#333' }
-        }
       }
     }
   });
