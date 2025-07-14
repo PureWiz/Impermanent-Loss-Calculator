@@ -67,6 +67,8 @@ function calculate() {
   const initialValue = priceA * amountA + priceB * amountB;
   const hodlValue = futureA * amountA + futureB * amountB;
   const dailyRate = apr / 365 / 100;
+  let inRangeDays = daysSelected; // ✅ Always exists!
+
 
   let rangeNote = "";
   let adjustedAmountA = amountA;
@@ -74,13 +76,14 @@ function calculate() {
   let feeGain = 0;
 
   if (useCustomRange) {
-    let inRangeDays = 0;
-    for (let day = 1; day <= daysSelected; day++) {
-      const simulatedPrice = priceA + (day / daysSelected) * (futureA - priceA);
-      if (simulatedPrice >= rangeMin && simulatedPrice <= rangeMax) {
-        inRangeDays++;
-      }
+  inRangeDays = 0;
+  for (let day = 1; day <= daysSelected; day++) {
+    const simulatedPrice = priceA + (day / daysSelected) * (futureA - priceA);
+    if (simulatedPrice >= rangeMin && simulatedPrice <= rangeMax) {
+      inRangeDays++;
     }
+  }
+
 
     feeGain = initialValue * dailyRate * inRangeDays;
 
