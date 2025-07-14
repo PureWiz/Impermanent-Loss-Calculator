@@ -1,69 +1,146 @@
+/* 🔷 Base styles */
 body {
   margin: 0;
-  background-color: #121212;
-  color: #fff;
-  font-family: 'Segoe UI', sans-serif;
-}
-
-h1 {
-  text-align: center;
-  padding: 1rem 0;
-  color: #00ffc8;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #0e0e0e;
+  color: #eaeaea;
 }
 
 .container {
   max-width: 800px;
-  margin: auto;
-  padding: 1rem;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 200, 0.05);
 }
 
+/* 🔷 Typography */
+h1, h2 {
+  text-align: center;
+  color: #00ffc8;
+  margin-bottom: 16px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 6px;
+  color: #ccc;
+}
+
+#aprLabel {
+  margin-left: 8px;
+  font-weight: bold;
+  color: #00ffc8;
+}
+
+/* 🔷 Layout cards */
 .card {
-  background-color: #1e1e1e;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
+  background-color: #222;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border: 1px solid #333;
 }
 
 .row {
   display: flex;
-  gap: 1rem;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .col {
   flex: 1;
-  min-width: 200px;
+  min-width: 220px;
 }
 
-input, select {
+/* 🔷 Inputs */
+input[type="number"],
+select {
   width: 100%;
-  padding: 0.5rem;
-  margin-top: 0.3rem;
-  background-color: #2b2b2b;
-  border: none;
-  border-radius: 4px;
-  color: #fff;
+  padding: 8px;
+  background-color: #111;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #eee;
+  font-size: 16px;
 }
 
+input[type="range"] {
+  width: 100%;
+  accent-color: #00ffc8;
+  margin-top: 5px;
+}
+
+input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-right: 6px;
+}
+
+/* 🔷 Select styling */
+select option {
+  background-color: #111;
+  color: #ccc;
+}
+
+/* 🔷 Button */
 button {
-  width: 100%;
   background-color: #00ffc8;
   color: #000;
-  padding: 0.7rem;
-  border: none;
-  border-radius: 4px;
   font-weight: bold;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-top: 1rem;
+  font-size: 16px;
+  display: block;
+  margin: 10px auto 20px;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-  background-color: #00cc9f;
+  background-color: #00ddb0;
 }
 
+/* 🔷 Output */
+#output p {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+#output em {
+  display: block;
+  margin-top: 10px;
+  color: #aaa;
+}
+
+/* 🔷 Canvas styling */
 canvas {
-  margin-top: 2rem;
-  background-color: #1a1a1a;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+#chart {
+  margin-top: 10px;
+  background-color: #111;
+  border-top: 1px solid #444;
+  border-radius: 6px;
+}
+
+#rangeChart {
+  margin-top: 10px;
+  background-color: #111;
+  border-top: 1px dashed #555;
+  border-radius: 6px;
+}
+
+/* 🔷 Custom range block */
+#customRangeInputs {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #444;
+  background-color: #191919;
   border-radius: 8px;
-  padding: 1rem;
 }
