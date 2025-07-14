@@ -4,10 +4,17 @@ const priceAField = document.getElementById("priceA");
 const priceBField = document.getElementById("priceB");
 const aprSlider = document.getElementById("apr");
 const aprLabel = document.getElementById("aprLabel");
+const customRangeToggle = document.getElementById("customRangeToggle");
+const customRangeInputs = document.getElementById("customRangeInputs");
+const rangeMinInput = document.getElementById("rangeMin");
+const rangeMaxInput = document.getElementById("rangeMax");
 
 let topCoins = [];
 
-// Load top 100 coins from CoinGecko
+customRangeToggle.onchange = () => {
+  customRangeInputs.style.display = customRangeToggle.checked ? "block" : "none";
+};
+
 fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
   .then(data => {
@@ -51,20 +58,50 @@ function calculate() {
   const futureB = parseFloat(document.getElementById("futureB").value);
   const apr = parseFloat(aprSlider.value);
   const daysSelected = parseFloat(document.getElementById("days").value);
+  const useCustomRange = customRangeToggle.checked;
+  const rangeMin = parseFloat(rangeMinInput.value);
+  const rangeMax = parseFloat(rangeMaxInput.value);
 
   const initialValue = priceA * amountA + priceB * amountB;
   const hodlValue = futureA * amountA + futureB * amountB;
-  const poolValue = 2 * Math.sqrt(futureA * amountA * futureB * amountB);
   const dailyRate = apr / 365 / 100;
-  const feeGain = initialValue * dailyRate * daysSelected;
+
+  // Determine in-range status
+  let inRange = true;
+  let rangeNote = "";
+  let adjustedAmountA = amountA;
+  let adjustedAmountB = amountB;
+  let feeGain = 0;
+
+  if (useCustomRange) {
+    if (futureA < rangeMin) {
+      inRange = false;
+      rangeNote = "Price below range — pool converted to ETH";
+      adjustedAmountB = 0;
+    } else if (futureA > rangeMax) {
+      inRange = false;
+      rangeNote = "Price above range — pool converted to USDC";
+      adjustedAmountA = 0;
+    } else {
+      feeGain = initialValue * dailyRate * daysSelected;
+      rangeNote = "Price stays within range — fees active";
+    }
+    drawRangeChart(rangeMin, rangeMax, priceA, futureA);
+  } else {
+    feeGain = initialValue * dailyRate * daysSelected;
+    rangeNote = "Full range pool — fees active";
+    document.getElementById("rangeChart").style.display = "none";
+  }
+
+  const poolValue = 2 * Math.sqrt(futureA * adjustedAmountA * futureB * adjustedAmountB);
   const poolTotal = poolValue + feeGain;
-  const netReturn = poolTotal - hodlValue;
   const impermanentLoss = hodlValue - poolValue;
 
-  let breakEvenDay = "No break-even point within selected timeframe";
+  let breakEvenDay = "No break-even within 1 year";
   for (let d = 1; d <= 365; d++) {
     const gain = initialValue * dailyRate * d;
-    if (poolValue + gain >= hodlValue) {
+    const total = poolValue + (inRange ? gain : 0);
+    if (total >= hodlValue) {
       breakEvenDay = `${d} day${d > 1 ? "s" : ""}`;
       break;
     }
@@ -75,16 +112,17 @@ function calculate() {
   document.getElementById("output").innerHTML = `
     <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
     <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
-    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} over ${daysSelected} days (${apr}% APR)</p>
+    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)} (${inRange ? "active" : "inactive"})</p>
     <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
     <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
     <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
+    <p><em>${rangeNote}</em></p>
   `;
 
-  drawChart(initialValue, poolValue, hodlValue, dailyRate);
+  drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange);
 }
 
-function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
+function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
   const ctx = document.getElementById('chart').getContext('2d');
   const labels = [];
   const netReturns = [];
@@ -94,7 +132,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
   for (let day = 0; day <= 365; day += 15) {
     labels.push(`${day}`);
     const gain = initialValue * dailyRate * day;
-    const totalPool = poolValue + gain;
+    const totalPool = poolValue + (inRange ? gain : 0);
     const diff = ((totalPool - hodlValue) / hodlValue) * 100;
     netReturns.push(diff.toFixed(2));
 
@@ -104,9 +142,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
     }
   }
 
-  if (window.myChart) {
-    window.myChart.destroy();
-  }
+  if (window.myChart) window.myChart.destroy();
 
   window.myChart = new Chart(ctx, {
     type: 'line',
@@ -116,18 +152,16 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
         label: 'Net Return vs HODL (%)',
         data: netReturns,
         fill: true,
-        backgroundColor: function(context) {
-          const value = context.chart.data.datasets[0].data[context.dataIndex];
-          return value >= 0 ? 'rgba(0,255,150,0.2)' : 'rgba(255,0,0,0.2)';
-        },
+        backgroundColor: context =>
+          parseFloat(context.chart.data.datasets[0].data[context.dataIndex]) >= 0
+            ? 'rgba(0,255,150,0.2)'
+            : 'rgba(255,0,0,0.2)',
         borderColor: '#00ffc8',
         tension: 0.4,
-        pointBackgroundColor: function(context) {
-          return context.dataIndex === breakevenIndex ? '#ff0' : '#fff';
-        },
-        pointRadius: function(context) {
-          return context.dataIndex === breakevenIndex ? 7 : 4;
-        }
+        pointBackgroundColor: ctx =>
+          ctx.dataIndex === breakevenIndex ? '#ff0' : '#fff',
+        pointRadius: ctx =>
+          ctx.dataIndex === breakevenIndex ? 7 : 4
       }]
     },
     options: {
@@ -138,7 +172,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
         },
         tooltip: {
           callbacks: {
-            label: context => `Net Difference: ${context.parsed.y}%`
+            label: ctx => `Net: ${ctx.parsed.y}%`
           }
         },
         annotation: breakevenIndex >= 0 ? {
@@ -150,7 +184,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
               borderColor: '#00ffc8',
               borderWidth: 2,
               label: {
-                content: `Break-even at ${breakevenDayLabel} days`,
+                content: `Break-even at ${breakevenDayLabel}d`,
                 enabled: true,
                 position: 'start',
                 backgroundColor: '#00ffc8',
@@ -162,20 +196,12 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
       },
       scales: {
         x: {
-          title: { display: true, text: 'Days', color: '#ccc' },
+          title: {
+            display: true,
+            text: 'Days',
+            color: '#ccc'
+          },
           ticks: { color: '#ccc' },
           grid: { color: '#333' }
         },
-        y: {
-          title: { display: true, text: 'Net Return (%)', color: '#ccc' },
-          ticks: { color: '#ccc' },
-          grid: { color: '#333' }
-        }
-      },
-      animation: {
-        duration: 1200,
-        easing: 'easeOutQuart'
-      }
-    }
-  });
-}
+        y
