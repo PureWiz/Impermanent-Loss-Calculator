@@ -222,4 +222,37 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, effectiveDays)
       }
     }
   });
+} // ← End of drawChart()
+
+function drawRangeChart(min, max, current, future) {
+  const ctx = document.getElementById("rangeChart").getContext("2d");
+  if (window.rangeVisChart) window.rangeVisChart.destroy();
+  window.rangeVisChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Min', 'Current', 'Max', 'Future'],
+      datasets: [{
+        label: 'Price Position',
+        data: [min, current, max, future],
+        backgroundColor: ['#888', '#00ffc8', '#888', '#ffaa00']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#ccc' },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
+        }
+      }
+    }
+  });
 }
