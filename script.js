@@ -11,12 +11,10 @@ const rangeMaxInput = document.getElementById("rangeMax");
 
 let topCoins = [];
 
-// Toggle visibility of custom range inputs
 customRangeToggle.onchange = () => {
   customRangeInputs.style.display = customRangeToggle.checked ? "block" : "none";
 };
 
-// Load top 100 coins from CoinGecko
 fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
   .then(data => {
@@ -36,7 +34,9 @@ function populateDropdown(select, coins) {
 
 tokenASelect.onchange = () => updatePrice(tokenASelect.value, priceAField);
 tokenBSelect.onchange = () => updatePrice(tokenBSelect.value, priceBField);
-aprSlider.oninput = () => aprLabel.textContent = `${aprSlider.value}%`;
+aprSlider.oninput = () => {
+  aprLabel.textContent = `${aprSlider.value}%`;
+};
 
 function updatePrice(id, field) {
   fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd`)
@@ -200,4 +200,5 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
           grid: { color: '#333' }
         },
         y: {
-          title: { display: true, text: 'Net Return (%)
+          title: { display: true, text: 'Net Return (%)', color: '#ccc' },
+          ticks: { color: '#ccc' },
