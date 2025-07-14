@@ -11,10 +11,12 @@ const rangeMaxInput = document.getElementById("rangeMax");
 
 let topCoins = [];
 
+// Toggle visibility of custom range inputs
 customRangeToggle.onchange = () => {
   customRangeInputs.style.display = customRangeToggle.checked ? "block" : "none";
 };
 
+// Load top 100 coins from CoinGecko
 fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
   .then(data => {
@@ -66,7 +68,6 @@ function calculate() {
   const hodlValue = futureA * amountA + futureB * amountB;
   const dailyRate = apr / 365 / 100;
 
-  // Determine in-range status
   let inRange = true;
   let rangeNote = "";
   let adjustedAmountA = amountA;
@@ -167,9 +168,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
     options: {
       responsive: true,
       plugins: {
-        legend: {
-          labels: { color: '#fff' }
-        },
+        legend: { labels: { color: '#fff' } },
         tooltip: {
           callbacks: {
             label: ctx => `Net: ${ctx.parsed.y}%`
@@ -196,12 +195,9 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate, inRange) {
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Days',
-            color: '#ccc'
-          },
+          title: { display: true, text: 'Days', color: '#ccc' },
           ticks: { color: '#ccc' },
           grid: { color: '#333' }
         },
-        y
+        y: {
+          title: { display: true, text: 'Net Return (%)
