@@ -73,27 +73,6 @@
     </div>
 
     <div class="card">
-      <h2>Range Options</h2>
-      <label>
-        <input type="checkbox" id="customRangeToggle" />
-        Use Custom Price Range
-      </label>
-      <div id="customRangeInputs" style="display:none;">
-        <div class="row">
-          <div class="col">
-            <label>Min Price Token A ($)</label>
-            <input type="number" id="rangeMin" value="1700" />
-          </div>
-          <div class="col">
-            <label>Max Price Token A ($)</label>
-            <input type="number" id="rangeMax" value="2000" />
-          </div>
-        </div>
-        <canvas id="rangeChart" height="100"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
       <button onclick="calculate()">Calculate</button>
       <div id="output"></div>
       <canvas id="chart" height="250"></canvas>
