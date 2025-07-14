@@ -10,7 +10,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Impermanent Loss Calculator - ReDeFi</h1>
+    <h1>Impermanent Loss Calculator - ReDeFi.ai</h1>
 
     <div class="card">
       <h2>Tokens</h2>
@@ -33,11 +33,11 @@
       <div class="row">
         <div class="col">
           <label>Amount Token A</label>
-          <input type="number" id="amountA" value="5" />
+          <input type="number" id="amountA" value="0.17" />
         </div>
         <div class="col">
           <label>Amount Token B</label>
-          <input type="number" id="amountB" value="5" />
+          <input type="number" id="amountB" value="500" />
         </div>
       </div>
     </div>
@@ -47,11 +47,11 @@
       <div class="row">
         <div class="col">
           <label>Future Price Token A</label>
-          <input type="number" id="futureA" value="120" />
+          <input type="number" id="futureA" value="2200" />
         </div>
         <div class="col">
           <label>Future Price Token B</label>
-          <input type="number" id="futureB" value="80" />
+          <input type="number" id="futureB" value="1" />
         </div>
       </div>
     </div>
@@ -68,6 +68,24 @@
           <label>Duration (Days)</label>
           <input type="number" id="days" value="90" />
         </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Range Options</h2>
+      <label><input type="checkbox" id="customRangeToggle" /> Use Custom Price Range</label>
+      <div id="customRangeInputs" style="display:none;">
+        <div class="row">
+          <div class="col">
+            <label>Min Price Token A ($)</label>
+            <input type="number" id="rangeMin" value="1700" />
+          </div>
+          <div class="col">
+            <label>Max Price Token A ($)</label>
+            <input type="number" id="rangeMax" value="2000" />
+          </div>
+        </div>
+        <canvas id="rangeChart" height="100"></canvas>
       </div>
     </div>
 
