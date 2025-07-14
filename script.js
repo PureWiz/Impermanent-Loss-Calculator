@@ -96,10 +96,11 @@ function calculate() {
 
     drawRangeChart(rangeMin, rangeMax, priceA, futureA);
   } else {
-    feeGain = initialValue * dailyRate * daysSelected;
-    rangeNote = `Full range pool → LP active for all ${daysSelected} days.`;
-    document.getElementById("rangeChart").style.display = "none";
-  }
+  feeGain = initialValue * dailyRate * daysSelected;
+  inRangeDays = daysSelected;
+  rangeNote = `Full range pool → LP active for all ${daysSelected} days.`;
+  document.getElementById("rangeChart").style.display = "none";
+}
 
   const poolValue = 2 * Math.sqrt(futureA * adjustedAmountA * futureB * adjustedAmountB);
   const poolTotal = poolValue + feeGain;
