@@ -100,15 +100,28 @@ function calculate() {
 
   const verdict = poolTotal > hodlValue ? "🟢 Pool strategy is better" : "🛑 HODL strategy is safer";
 
-  document.getElementById("output").innerHTML = `
-    <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
-    <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
-    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
-    <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
-    <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
-    <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
+  let extraHodlNote = "";
+if (hodlType === "ethOnly") {
+  const totalETH = amountA + amountB / priceA;
+  const futureETHValue = futureA * totalETH;
+  extraHodlNote = `
+    <hr>
+    <p><strong>Full ETH HODL Breakdown:</strong></p>
+    <p>Total ETH Held: ${totalETH.toFixed(4)} ETH</p>
+    <p>Future ETH Value: $${futureETHValue.toFixed(2)}</p>
   `;
+}
 
+document.getElementById("output").innerHTML = `
+  <p><strong>HODL Strategy:</strong> ${hodlType === "ethOnly" ? "Full ETH Only" : "Balanced (ETH + USDC)"}</p>
+  <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
+  <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
+  <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
+  <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
+  <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
+  <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
+  ${extraHodlNote}
+`;
   drawChart(initialValue, poolValue, hodlValue, dailyRate);
 }
 
@@ -201,3 +214,4 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
     }
   });
 }
+
