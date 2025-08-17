@@ -15,7 +15,6 @@ fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
     populateDropdown(tokenASelect, topCoins);
     populateDropdown(tokenBSelect, topCoins);
 
-    // Force initial selector check
     setTimeout(() => {
       updatePrice(tokenASelect.value, priceAField);
       updatePrice(tokenBSelect.value, priceBField);
@@ -78,14 +77,14 @@ function calculate() {
   const dailyRate = apr / 365 / 100;
   const feeGain = initialValue * dailyRate * daysSelected;
 
-  // HODL logic
   let hodlValue;
   const tokenBId = tokenBSelect.value;
   const isStable = stablecoins.includes(tokenBId);
   const hodlType = isStable ? document.getElementById("hodlType").value : "balanced";
 
+  let totalETH = amountA;
   if (hodlType === "ethOnly") {
-    const totalETH = amountA + amountB / priceA;
+    totalETH += amountB / priceA;
     hodlValue = futureA * totalETH;
   } else {
     hodlValue = futureA * amountA + futureB * amountB;
@@ -108,27 +107,27 @@ function calculate() {
   const verdict = poolTotal > hodlValue ? "🟢 Pool strategy is better" : "🛑 HODL strategy is safer";
 
   let extraHodlNote = "";
-if (hodlType === "ethOnly") {
-  const totalETH = amountA + amountB / priceA;
-  const futureETHValue = futureA * totalETH;
-  extraHodlNote = `
-    <hr>
-    <p><strong>Full ETH HODL Breakdown:</strong></p>
-    <p>Total ETH Held: ${totalETH.toFixed(4)} ETH</p>
-    <p>Future ETH Value: $${futureETHValue.toFixed(2)}</p>
-  `;
-}
+  if (hodlType === "ethOnly") {
+    const futureETHValue = futureA * totalETH;
+    extraHodlNote = `
+      <hr>
+      <p><strong>Full ETH HODL Breakdown:</strong></p>
+      <p>Total ETH Held: ${totalETH.toFixed(4)} ETH</p>
+      <p>Future ETH Value: $${futureETHValue.toFixed(2)}</p>
+    `;
+  }
 
-document.getElementById("output").innerHTML = `
-  <p><strong>HODL Strategy:</strong> ${hodlType === "ethOnly" ? "Full ETH Only" : "Balanced (ETH + USDC)"}</p>
-  <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
-  <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
-  <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
-  <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
-  <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
-  <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
-  ${extraHodlNote}
-`;
+  document.getElementById("output").innerHTML = `
+    <p><strong>HODL Strategy:</strong> ${hodlType === "ethOnly" ? "Full ETH Only" : "Balanced (ETH + USDC)"}</p>
+    <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
+    <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
+    <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
+    <p><strong>Impermanent Loss:</strong> -$${impermanentLoss.toFixed(2)}</p>
+    <p><strong>Break-even Point:</strong> ${breakEvenDay}</p>
+    <p><strong>Verdict:</strong> <span style="font-weight:bold; color:#00ffc8;">${verdict}</span></p>
+    ${extraHodlNote}
+  `;
+
   drawChart(initialValue, poolValue, hodlValue, dailyRate);
 }
 
@@ -209,18 +208,4 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
           grid: { color: '#333' }
         },
         y: {
-          title: { display: true, text: 'Net Return (%)', color: '#ccc' },
-          ticks: { color: '#ccc' },
-          grid: { color: '#333' }
-        }
-      },
-      animation: {
-        duration: 1200,
-        easing: 'easeOutQuart'
-      }
-    }
-  });
-}
-
-
-
+          title: { display: true, text: 'Net Return (%)', color: '#ccc'
