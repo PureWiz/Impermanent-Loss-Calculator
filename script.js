@@ -77,15 +77,16 @@ function calculate() {
   const dailyRate = apr / 365 / 100;
   const feeGain = initialValue * dailyRate * daysSelected;
 
-  let hodlValue;
   const tokenBId = tokenBSelect.value;
   const isStable = stablecoins.includes(tokenBId);
   const hodlType = isStable ? document.getElementById("hodlType").value : "balanced";
 
-  let totalETH = amountA;
-  if (hodlType === "ethOnly") {
-    totalETH += amountB / priceA;
-    hodlValue = futureA * totalETH;
+  let hodlValue;
+  let totalAssetA = amountA;
+
+  if (hodlType === "assetOnly") {
+    totalAssetA += amountB / priceA;
+    hodlValue = futureA * totalAssetA;
   } else {
     hodlValue = futureA * amountA + futureB * amountB;
   }
@@ -107,18 +108,19 @@ function calculate() {
   const verdict = poolTotal > hodlValue ? "🟢 Pool strategy is better" : "🛑 HODL strategy is safer";
 
   let extraHodlNote = "";
-  if (hodlType === "ethOnly") {
-    const futureETHValue = futureA * totalETH;
+  if (hodlType === "assetOnly") {
+    const assetLabel = tokenASelect.options[tokenASelect.selectedIndex].text.split(" ")[0];
+    const futureAssetValue = futureA * totalAssetA;
     extraHodlNote = `
       <hr>
-      <p><strong>Full ETH HODL Breakdown:</strong></p>
-      <p>Total ETH Held: ${totalETH.toFixed(4)} ETH</p>
-      <p>Future ETH Value: $${futureETHValue.toFixed(2)}</p>
+      <p><strong>Full Asset HODL Breakdown:</strong></p>
+      <p>Total ${assetLabel} Held: ${totalAssetA.toFixed(4)}</p>
+      <p>Future Value: $${futureAssetValue.toFixed(2)}</p>
     `;
   }
 
   document.getElementById("output").innerHTML = `
-    <p><strong>HODL Strategy:</strong> ${hodlType === "ethOnly" ? "Full ETH Only" : "Balanced (ETH + USDC)"}</p>
+    <p><strong>HODL Strategy:</strong> ${hodlType === "assetOnly" ? "Full Asset HODL" : "Balanced HODL"}</p>
     <p><strong>HODL Value:</strong> $${hodlValue.toFixed(2)}</p>
     <p><strong>Pool Value + Fees:</strong> $${poolTotal.toFixed(2)}</p>
     <p><strong>Fee Gains:</strong> $${feeGain.toFixed(2)}</p>
@@ -206,11 +208,6 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
           title: { display: true, text: 'Days', color: '#ccc' },
           ticks: { color: '#ccc' },
           grid: { color: '#333' }
-        },
-        y: {
-          title: { display: true, text: 'Net Return (%)', color: '#ccc' },
-          ticks: { color: '#ccc' },
-          grid: { color: '#333' }
         }
       },
       animation: {
@@ -220,6 +217,7 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
     }
   });
 }
+
 
 
 
