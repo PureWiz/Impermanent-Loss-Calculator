@@ -6,6 +6,7 @@ const aprSlider = document.getElementById("apr");
 const aprLabel = document.getElementById("aprLabel");
 
 let topCoins = [];
+const stablecoins = ["usdc", "usdt", "dai", "tusd", "gusd", "lusd"];
 
 fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1")
   .then(res => res.json())
@@ -25,7 +26,10 @@ function populateDropdown(select, coins) {
 }
 
 tokenASelect.onchange = () => updatePrice(tokenASelect.value, priceAField);
-tokenBSelect.onchange = () => updatePrice(tokenBSelect.value, priceBField);
+tokenBSelect.onchange = () => {
+  updatePrice(tokenBSelect.value, priceBField);
+  toggleHodlSelector();
+};
 aprSlider.oninput = () => {
   aprLabel.textContent = `${aprSlider.value}%`;
 };
@@ -43,6 +47,16 @@ function updatePrice(id, field) {
     });
 }
 
+function toggleHodlSelector() {
+  const tokenBId = tokenBSelect.value;
+  const hodlBlock = document.getElementById("hodlBlock");
+  if (stablecoins.includes(tokenBId)) {
+    hodlBlock.style.display = "block";
+  } else {
+    hodlBlock.style.display = "none";
+  }
+}
+
 function calculate() {
   const priceA = parseFloat(priceAField.textContent);
   const priceB = parseFloat(priceBField.textContent);
@@ -54,9 +68,21 @@ function calculate() {
   const daysSelected = parseFloat(document.getElementById("days").value);
 
   const initialValue = priceA * amountA + priceB * amountB;
-  const hodlValue = futureA * amountA + futureB * amountB;
   const dailyRate = apr / 365 / 100;
   const feeGain = initialValue * dailyRate * daysSelected;
+
+  // HODL logic
+  let hodlValue;
+  const tokenBId = tokenBSelect.value;
+  const isStable = stablecoins.includes(tokenBId);
+  const hodlType = isStable ? document.getElementById("hodlType").value : "balanced";
+
+  if (hodlType === "ethOnly") {
+    const totalETH = amountA + amountB / priceA;
+    hodlValue = futureA * totalETH;
+  } else {
+    hodlValue = futureA * amountA + futureB * amountB;
+  }
 
   const poolValue = 2 * Math.sqrt(futureA * amountA * futureB * amountB);
   const poolTotal = poolValue + feeGain;
