@@ -208,4 +208,17 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
           grid: { color: '#333' }
         },
         y: {
-          title: { display: true, text: 'Net Return (%)', color: '#ccc'
+          title: { display: true, text: 'Net Return (%)', color: '#ccc' },
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
+        }
+      },
+      animation: {
+        duration: 1200,
+        easing: 'easeOutQuart'
+      }
+    }
+  });
+}
+
+
