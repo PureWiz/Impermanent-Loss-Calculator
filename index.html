@@ -29,12 +29,6 @@
       </div>
     </div>
 
-    <div class="card" id="hodlBlock" style="display:none;">
-  <h2>HODL Strategy</h2>
-  <label for="hodlType">Choose HODL Type:</label>
-  <select id="hodlType">
-    <option value="balanced">Balanced
-    
     <div class="card">
       <h2>Amounts</h2>
       <div class="row">
@@ -78,6 +72,15 @@
       </div>
     </div>
 
+    <div class="card" id="hodlBlock" style="display:none;">
+      <h2>HODL Strategy</h2>
+      <label for="hodlType">Choose HODL Type:</label>
+      <select id="hodlType">
+        <option value="balanced">Balanced (ETH + USDC)</option>
+        <option value="ethOnly">Full ETH Only</option>
+      </select>
+    </div>
+
     <div class="card">
       <button onclick="calculate()">Calculate</button>
       <div id="output"></div>
@@ -88,4 +91,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
