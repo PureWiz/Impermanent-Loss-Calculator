@@ -14,6 +14,7 @@ fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=mark
     topCoins = data;
     populateDropdown(tokenASelect, topCoins);
     populateDropdown(tokenBSelect, topCoins);
+    toggleHodlSelector(); // ✅ Ensures HODL selector appears if Token B is stable
   });
 
 function populateDropdown(select, coins) {
@@ -214,4 +215,5 @@ function drawChart(initialValue, poolValue, hodlValue, dailyRate) {
     }
   });
 }
+
 
